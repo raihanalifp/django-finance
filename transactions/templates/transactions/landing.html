@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinanceOS — Kendali Keuangan Anda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0d12;
+      --surface: #111620;
+      --surface2: #161c28;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4fffb0;
+      --accent2: #3b82f6;
+      --accent3: #f59e0b;
+      --text: #e8edf5;
+      --muted: #7a8599;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      width: 10px; height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1.5px solid var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.4;
+      transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.35;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 20px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 13, 18, 0.75);
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent); }
+
+    .nav-cta {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .btn-outline {
+      padding: 9px 22px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-primary {
+      padding: 9px 22px;
+      background: var(--accent);
+      border-radius: 8px;
+      color: #0a0d12;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary:hover { background: #39e89b; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,255,176,0.25); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 100px 48px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: float 8s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(79,255,176,0.12) 0%, transparent 70%);
+      top: -100px; right: -100px;
+      animation-delay: 0s;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+      bottom: 0; left: -80px;
+      animation-delay: -3s;
+    }
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+      top: 40%; left: 40%;
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    .hero-inner {
+      max-width: 760px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px;
+      background: rgba(79,255,176,0.08);
+      border: 1px solid rgba(79,255,176,0.2);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-bottom: 32px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.07;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+    h1 .highlight {
+      color: var(--accent);
+      position: relative;
+    }
+
+    .hero-desc {
+      font-size: 1.125rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto 40px;
+      font-weight: 300;
+    }
+
+    .hero-actions {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    }
+    .btn-hero {
+      padding: 14px 32px;
+      background: var(--accent);
+      border-radius: 10px;
+      color: #0a0d12;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(79,255,176,0.3); }
+    .btn-hero-ghost {
+      padding: 14px 32px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-hero-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    /* STATS BAR */
+    .stats-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 48px;
+      display: flex; justify-content: center; gap: 0;
+      background: var(--surface);
+    }
+    .stat-item {
+      flex: 1; max-width: 220px;
+      text-align: center;
+      padding: 0 32px;
+      position: relative;
+    }
+    .stat-item:not(:last-child)::after {
+      content: '';
+      position: absolute; right: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 1px; height: 40px;
+      background: var(--border);
+    }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .stat-num span { color: var(--accent); }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* FEATURES */
+    .features {
+      padding: 100px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 60px;
+      max-width: 500px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(79,255,176,0.04) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(79,255,176,0.2); transform: translateY(-4px); }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+    .ic-green { background: rgba(79,255,176,0.1); }
+    .ic-blue { background: rgba(59,130,246,0.1); }
+    .ic-amber { background: rgba(245,158,11,0.1); }
+    .ic-red { background: rgba(239,68,68,0.1); }
+
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* MOCKUP / DASHBOARD PREVIEW */
+    .preview-section {
+      padding: 0 48px 100px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .preview-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    .preview-topbar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: #ef4444; } .dot-yellow { background: #f59e0b; } .dot-green { background: #4fffb0; }
+    .preview-url {
+      margin-left: 16px;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 4px 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      flex: 1; max-width: 300px;
+    }
+
+    .preview-body {
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .mini-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .mini-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .mini-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .green { color: var(--accent); }
+    .red { color: #ef4444; }
+    .blue { color: var(--accent2); }
+    .mini-change { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+    .mini-chart {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      grid-column: span 3;
+    }
+    .mini-chart-title { font-size: 0.75rem; color: var(--muted); margin-bottom: 16px; }
+    .bars {
+      display: flex; align-items: flex-end; gap: 6px; height: 70px;
+    }
+    .bar {
+      flex: 1;
+      background: rgba(59,130,246,0.4);
+      border-radius: 4px 4px 0 0;
+      transition: background 0.2s;
+      animation: growUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .bar:hover { background: rgba(79,255,176,0.6); }
+    .bar.today { background: rgba(239,68,68,0.7); }
+    @keyframes growUp {
+      from { transform: scaleY(0); transform-origin: bottom; }
+      to { transform: scaleY(1); transform-origin: bottom; }
+    }
+
+    /* CTA */
+    .cta-section {
+      padding: 80px 48px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(79,255,176,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+    }
+    .cta-section p { color: var(--muted); margin-bottom: 36px; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-size: 0.8rem; color: var(--muted); }
+    .footer-logo { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+    .footer-logo span { color: var(--accent); }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .hero { padding: 90px 24px 60px; }
+      .stats-bar { flex-wrap: wrap; padding: 24px; gap: 20px; }
+      .stat-item::after { display: none; }
+      .features { padding: 60px 24px; }
+      .preview-section { padding: 0 24px 60px; }
+      .preview-body { grid-template-columns: 1fr 1fr; }
+      .mini-card:last-of-type { grid-column: span 2; }
+      .mini-chart { grid-column: span 2; }
+      footer { flex-direction: column; gap: 10px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">Finance<span>OS</span></div>
+    <div class="nav-cta">
+      <a href="/admin/login/?next=/dashboard/" class="btn-outline">Masuk</a>
+      <a href="/admin/login/?next=/dashboard/" class="btn-primary">Dashboard →</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="hero-inner">
+      <div class="badge"><span class="badge-dot"></span> Sistem Keuangan Pribadi</div>
+      <h1>Kendalikan Keuangan<br>Dengan <span class="highlight">Presisi</span></h1>
+      <p class="hero-desc">
+        Lacak pemasukan, pengeluaran, dan saldo Anda dalam satu dashboard yang bersih dan intuitif. Buat keputusan finansial lebih cerdas setiap harinya.
+      </p>
+      <div class="hero-actions">
+        <a href="/admin/login/?next=/dashboard/" class="btn-hero">Buka Dashboard</a>
+        <a href="#features" class="btn-hero-ghost">Lihat Fitur ↓</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar reveal">
+    <div class="stat-item">
+      <div class="stat-num"><span>100</span>%</div>
+      <div class="stat-label">Privasi Data</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">Real<span>time</span></div>
+      <div class="stat-label">Update Saldo</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num"><span>∞</span></div>
+      <div class="stat-label">Riwayat Transaksi</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num"><span>1</span>klik</div>
+      <div class="stat-label">Tambah Transaksi</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="reveal">
+      <div class="section-label">Fitur Utama</div>
+      <h2 class="section-title">Semua yang Anda butuhkan dalam satu tempat</h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal" style="transition-delay: 0.05s">
+        <div class="feature-icon ic-green">📊</div>
+        <div class="feature-title">Chart Harian</div>
+        <div class="feature-desc">Visualisasi pengeluaran per hari dengan bar chart interaktif. Highlight otomatis untuk hari ini.</div>
+      </div>
+      <div class="feature-card reveal" style="transition-delay: 0.1s">
+        <div class="feature-icon ic-blue">🗂️</div>
+        <div class="feature-title">Kategori Transaksi</div>
+        <div class="feature-desc">Kelompokkan pemasukan dan pengeluaran ke dalam kategori untuk analisis yang lebih mendalam.</div>
+      </div>
+      <div class="feature-card reveal" style="transition-delay: 0.15s">
+        <div class="feature-icon ic-amber">🔍</div>
+        <div class="feature-title">Filter Periode</div>
+        <div class="feature-desc">Filter laporan berdasarkan rentang tanggal yang fleksibel. Default otomatis ke bulan berjalan.</div>
+      </div>
+      <div class="feature-card reveal" style="transition-delay: 0.2s">
+        <div class="feature-icon ic-red">💰</div>
+        <div class="feature-title">Saldo Real-time</div>
+        <div class="feature-desc">Saldo dihitung otomatis dari semua transaksi. Income, expense, dan balance selalu up-to-date.</div>
+      </div>
+      <div class="feature-card reveal" style="transition-delay: 0.25s">
+        <div class="feature-icon ic-green">🔒</div>
+        <div class="feature-title">Akses Aman</div>
+        <div class="feature-desc">Dashboard hanya bisa diakses setelah login. Data keuangan Anda terlindungi sepenuhnya.</div>
+      </div>
+      <div class="feature-card reveal" style="transition-delay: 0.3s">
+        <div class="feature-icon ic-blue">⚡</div>
+        <div class="feature-title">Input Cepat</div>
+        <div class="feature-desc">Tambah transaksi baru hanya dalam beberapa detik. Form sederhana dan efisien.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD PREVIEW -->
+  <section class="preview-section reveal">
+    <div class="section-label" style="margin-bottom:14px">Preview</div>
+    <h2 class="section-title" style="margin-bottom:28px">Dashboard yang bersih & informatif</h2>
+
+    <div class="preview-wrap">
+      <div class="preview-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <div class="preview-url">localhost:8000/dashboard/</div>
+      </div>
+      <div class="preview-body">
+        <div class="mini-card">
+          <div class="mini-label">Total Pemasukan</div>
+          <div class="mini-value green">Rp 8.4jt</div>
+          <div class="mini-change">↑ bulan ini</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Total Pengeluaran</div>
+          <div class="mini-value red">Rp 3.2jt</div>
+          <div class="mini-change">↓ dari bulan lalu</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Saldo</div>
+          <div class="mini-value blue">Rp 5.2jt</div>
+          <div class="mini-change">semua waktu</div>
+        </div>
+        <div class="mini-chart">
+          <div class="mini-chart-title">Pengeluaran Harian — Februari 2025</div>
+          <div class="bars">
+            <div class="bar" style="height:25%; animation-delay: 0.05s"></div>
+            <div class="bar" style="height:45%; animation-delay: 0.1s"></div>
+            <div class="bar" style="height:20%; animation-delay: 0.15s"></div>
+            <div class="bar" style="height:60%; animation-delay: 0.2s"></div>
+            <div class="bar" style="height:30%; animation-delay: 0.25s"></div>
+            <div class="bar" style="height:80%; animation-delay: 0.3s"></div>
+            <div class="bar" style="height:15%; animation-delay: 0.35s"></div>
+            <div class="bar" style="height:50%; animation-delay: 0.4s"></div>
+            <div class="bar" style="height:35%; animation-delay: 0.45s"></div>
+            <div class="bar" style="height:90%; animation-delay: 0.5s"></div>
+            <div class="bar" style="height:40%; animation-delay: 0.55s"></div>
+            <div class="bar" style="height:55%; animation-delay: 0.6s"></div>
+            <div class="bar" style="height:20%; animation-delay: 0.65s"></div>
+            <div class="bar" style="height:70%; animation-delay: 0.7s"></div>
+            <div class="bar today" style="height:65%; animation-delay: 0.75s"></div>
+            <div class="bar" style="height:10%; animation-delay: 0.8s; opacity:0.3"></div>
+            <div class="bar" style="height:10%; animation-delay: 0.85s; opacity:0.3"></div>
+            <div class="bar" style="height:10%; animation-delay: 0.9s; opacity:0.3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section reveal">
+    <h2>Siap mengelola keuangan Anda?</h2>
+    <p>Login dengan akun admin untuk mengakses dashboard lengkap.</p>
+    <a href="/admin/login/?next=/dashboard/" class="btn-hero">Masuk Sekarang →</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Finance<span>OS</span></div>
+    <p>Dibangun dengan Django · Hanya untuk admin</p>
+    <p>© 2025</p>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.transform = `translate(${mx - 5}px, ${my - 5}px)`;
+    });
+
+    function animateRing() {
+      rx += (mx - rx - 18) * 0.12;
+      ry += (my - ry - 18) * 0.12;
+      cursorRing.style.transform = `translate(${rx}px, ${ry}px)`;
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.style.transform += ' scale(2)');
+      el.addEventListener('mouseleave', () => {});
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
