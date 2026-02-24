@@ -1,0 +1,203 @@
+{% extends "admin/base.html" %}
+{% load i18n unfold %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-col gap-1">
+            {% component "unfold/components/title.html" %}
+                {% trans "Dashboard" %}
+            {% endcomponent %}
+            <div class="text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                {% trans "Operational snapshot for the selected range." %}
+            </div>
+            <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                {% trans "Active range" %}: {{ date_filter.label }}
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.this_month.start|add:"&end="|add:quick_ranges.this_month.end variant="secondary" %}
+                {% trans "This month" %}
+            {% endcomponent %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_7.start|add:"&end="|add:quick_ranges.last_7.end variant="secondary" %}
+                {% trans "Last 7 days" %}
+            {% endcomponent %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_30.start|add:"&end="|add:quick_ranges.last_30.end variant="secondary" %}
+                {% trans "Last 30 days" %}
+            {% endcomponent %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_90.start|add:"&end="|add:quick_ranges.last_90.end variant="secondary" %}
+                {% trans "Last 90 days" %}
+            {% endcomponent %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_month.start|add:"&end="|add:quick_ranges.last_month.end variant="secondary" %}
+                {% trans "Last month" %}
+            {% endcomponent %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.ytd.start|add:"&end="|add:quick_ranges.ytd.end variant="secondary" %}
+                {% trans "YTD" %}
+            {% endcomponent %}
+        </div>
+    </div>
+
+    {% component "unfold/components/card.html" with title=_("Filter Dates") %}
+        <form method="get" class="grid gap-3 sm:grid-cols-3 sm:items-end">
+            <div class="flex flex-col gap-1">
+                <label class="text-xs uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark" for="filter-start">
+                    {% trans "Start date" %}
+                </label>
+                <input
+                    id="filter-start"
+                    name="start"
+                    type="date"
+                    value="{{ date_filter.start }}"
+                    class="vDateField border border-base-200 bg-white font-medium min-w-20 placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-52"
+                />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-xs uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark" for="filter-end">
+                    {% trans "End date" %}
+                </label>
+                <input
+                    id="filter-end"
+                    name="end"
+                    type="date"
+                    value="{{ date_filter.end }}"
+                    class="vDateField border border-base-200 bg-white font-medium min-w-20 placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-52"
+                />
+            </div>
+            <div class="flex flex-wrap gap-2">
+                {% component "unfold/components/button.html" with submit=1 variant="primary" size="md" %}
+                    {% trans "Apply" %}
+                {% endcomponent %}
+                {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.this_month.start|add:"&end="|add:quick_ranges.this_month.end variant="ghost" %}
+                    {% trans "Reset" %}
+                {% endcomponent %}
+            </div>
+        </form>
+    {% endcomponent %}
+
+    <div class="grid gap-6 lg:grid-cols-4">
+        {% component "unfold/components/card.html" with title=_("Categories") icon="category" icon_class="text-blue-500" class="border-l-4 border-blue-500" %}
+            <div class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                {{ stats.categories }}
+            </div>
+            <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                {% trans "Active in range" %}
+            </div>
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with title=_("Transactions") icon="receipt_long" icon_class="text-primary-600" class="border-l-4 border-primary-600" %}
+            <div class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                {{ stats.transactions }}
+            </div>
+            <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                {% trans "Selected range" %}
+            </div>
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with title=_("Income") icon="trending_up" icon_class="text-green-500" class="border-l-4 border-green-500" %}
+            <div class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                {{ stats_display.income_total }}
+            </div>
+            <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                {% trans "Selected range" %}
+            </div>
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with title=_("Expense") icon="trending_down" icon_class="text-red-500" class="border-l-4 border-red-500" %}
+            <div class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                {{ stats_display.expense_total }}
+            </div>
+            <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                {% trans "Selected range" %}
+            </div>
+        {% endcomponent %}
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+            {% component "unfold/components/card.html" with title=_("Cash Flow") label=date_filter.label %}
+                {% component "unfold/components/chart/bar.html" with data=chart_data height=220 %}{% endcomponent %}
+                <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                    <span class="flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                        {% trans "Income" %}
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                        {% trans "Expense" %}
+                    </span>
+                </div>
+            {% endcomponent %}
+        </div>
+
+        <div>
+            {% component "unfold/components/card.html" with title=_("Net Total") icon="account_balance" icon_class="text-primary-600" class="border-l-4 border-primary-600" %}
+                <div class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">
+                    {{ stats_display.net_total }}
+                </div>
+                <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                    {% if stats.net_total >= 0 %}
+                        {% trans "Positive balance" %}
+                    {% else %}
+                        {% trans "Negative balance" %}
+                    {% endif %}
+                </div>
+            {% endcomponent %}
+
+            <div class="mt-6">
+                {% component "unfold/components/card.html" with title=_("Expense Ratio") icon="insights" icon_class="text-orange-500" class="border-l-4 border-orange-500" %}
+                    {% component "unfold/components/progress.html" with title=_("Expenses vs income") description=expense_ratio|floatformat:0|add:"%" value=expense_ratio %}{% endcomponent %}
+                    <div class="mt-3 text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                        {% trans "Lower is better for savings." %}
+                    </div>
+                {% endcomponent %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+            {% component "unfold/components/card.html" with title=_("Recent Transactions") %}
+                {% component "unfold/components/table.html" with table=recent_table striped=1 card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+        </div>
+
+        <div class="flex flex-col gap-6">
+            {% component "unfold/components/card.html" with title=_("Top Expense Categories") %}
+                {% if top_categories %}
+                    <div class="relative w-full">
+                        <canvas class="chart" data-type="doughnut" data-value="{{ category_chart_data }}" height="200"></canvas>
+                    </div>
+                    <div class="mt-4 flex flex-col gap-3">
+                        {% for item in top_categories %}
+                            <div class="flex items-center justify-between text-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="h-2 w-2 rounded-full {{ item.color_class }}"></span>
+                                    <span class="text-font-important-light dark:text-font-important-dark">{{ item.name }}</span>
+                                </div>
+                                <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                                    {{ item.total_display }} · {{ item.percent_display }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                        {% trans "No expense data for this range." %}
+                    </div>
+                {% endif %}
+            {% endcomponent %}
+
+            {% component "unfold/components/card.html" with title=_("Quick Actions") %}
+                <div class="flex flex-col gap-3">
+                    {% component "unfold/components/button.html" with href=links.new_transaction variant="primary" %}
+                        {% trans "New Transaction" %}
+                    {% endcomponent %}
+                    {% component "unfold/components/button.html" with href=links.new_category variant="secondary" %}
+                        {% trans "New Category" %}
+                    {% endcomponent %}
+                </div>
+            {% endcomponent %}
+        </div>
+    </div>
+</div>
+{% endblock %}
