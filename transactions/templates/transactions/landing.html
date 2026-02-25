@@ -69,7 +69,7 @@
     /* NAV */
     nav {
       position: fixed; top: 0; left: 0; right: 0;
-      z-index: 100;
+      z-index: 120;
       padding: 20px 48px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--border);
@@ -88,6 +88,32 @@
     .nav-cta {
       display: flex; align-items: center; gap: 12px;
     }
+
+    .nav-toggle {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(17, 22, 32, 0.6);
+      color: var(--text);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    }
+    .nav-toggle:hover { border-color: rgba(255,255,255,0.2); }
+    .nav-toggle.is-open { border-color: rgba(79,255,176,0.6); color: var(--accent); }
+    .nav-toggle-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-block;
+      color: currentColor;
+    }
+
     .btn-outline {
       padding: 9px 22px;
       border: 1px solid var(--border);
@@ -484,6 +510,55 @@
       .mini-chart { grid-column: span 2; }
       footer { flex-direction: column; gap: 10px; text-align: center; }
     }
+
+    @media (max-width: 640px) {
+      body { cursor: auto; }
+      .cursor, .cursor-ring { display: none; }
+      nav {
+        padding: 14px 20px;
+        align-items: center;
+        flex-wrap: nowrap;
+      }
+      .nav-toggle { display: inline-flex; position: relative; z-index: 130; }
+      .nav-cta {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: min(320px, 82vw);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 88px 20px 20px;
+        background: rgba(17, 22, 32, 0.98);
+        border-left: 1px solid var(--border);
+        box-shadow: -24px 0 60px rgba(0, 0, 0, 0.35);
+        z-index: 110;
+        transform: translateX(110%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+      }
+      nav.open .nav-cta {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .btn-outline, .btn-primary { width: 100%; text-align: center; }
+      .hero { min-height: auto; padding: 110px 20px 50px; }
+      .hero-desc { font-size: 1rem; }
+      .hero-actions { width: 100%; }
+      .btn-hero, .btn-hero-ghost { width: 100%; text-align: center; }
+      .stats-bar { flex-direction: column; align-items: stretch; }
+      .stat-item { max-width: 100%; padding: 16px 8px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .preview-topbar { flex-wrap: wrap; }
+      .preview-url { margin-left: 0; width: 100%; max-width: none; }
+      .preview-body { grid-template-columns: 1fr; }
+      .mini-card, .mini-chart { grid-column: span 1; }
+      footer { padding: 24px 20px; }
+    }
   </style>
 </head>
 <body>
@@ -494,7 +569,16 @@
   <!-- NAV -->
   <nav>
     <div class="logo">Finance<span>OS</span></div>
-    <div class="nav-cta">
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navMenu">
+      <svg class="nav-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="4" width="6" height="6" rx="1.5" fill="currentColor"></rect>
+        <rect x="14" y="4" width="6" height="6" rx="1.5" fill="currentColor"></rect>
+        <rect x="4" y="14" width="6" height="6" rx="1.5" fill="currentColor"></rect>
+        <rect x="14" y="14" width="6" height="6" rx="1.5" fill="currentColor"></rect>
+      </svg>
+      <span>Menu</span>
+    </button>
+    <div class="nav-cta" id="navMenu">
       <a href="/admin/login/?next=/admin/" class="btn-outline">Masuk</a>
       <a href="/admin/login/?next=/admin/" class="btn-primary">Admin →</a>
     </div>
@@ -679,6 +763,17 @@
     }, { threshold: 0.1 });
 
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    const nav = document.querySelector('nav');
+    const navToggle = document.getElementById('navToggle');
+    if (nav && navToggle) {
+      navToggle.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('open');
+        navToggle.classList.toggle('is-open', isOpen);
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    }
+
   </script>
 </body>
 </html>
