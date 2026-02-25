@@ -1,6 +1,44 @@
 {% extends "admin/base.html" %}
 {% load i18n unfold %}
 
+{% block title %}
+    {% if subtitle %}
+        {{ subtitle }} |
+    {% endif %}
+    {{ title }} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script defer>
+        document.addEventListener("DOMContentLoaded", () => {
+            const search = document.getElementById("filter-owner-search");
+            const select = document.getElementById("filter-owner");
+            if (!search || !select) {
+                return;
+            }
+            const options = Array.from(select.options);
+            const normalize = (value) => value.toLowerCase();
+            const applyFilter = () => {
+                const term = normalize(search.value.trim());
+                options.forEach((option) => {
+                    if (!term) {
+                        option.hidden = false;
+                        return;
+                    }
+                    const text = normalize(option.textContent || "");
+                    option.hidden = !text.includes(term);
+                });
+            };
+            search.addEventListener("input", applyFilter);
+        });
+    </script>
+{% endblock %}
+
 {% block content %}
 <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -14,31 +52,36 @@
             <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
                 {% trans "Active range" %}: {{ date_filter.label }}
             </div>
+            {% if request.user.is_superuser %}
+                <div class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                    {% trans "Owner" %}: {{ owner_filter.label }}
+                </div>
+            {% endif %}
         </div>
         <div class="flex flex-wrap gap-2">
-            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.this_month.start|add:"&end="|add:quick_ranges.this_month.end variant="secondary" %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.this_month.start|add:"&end="|add:quick_ranges.this_month.end|add:owner_query variant="secondary" %}
                 {% trans "This month" %}
             {% endcomponent %}
-            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_7.start|add:"&end="|add:quick_ranges.last_7.end variant="secondary" %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_7.start|add:"&end="|add:quick_ranges.last_7.end|add:owner_query variant="secondary" %}
                 {% trans "Last 7 days" %}
             {% endcomponent %}
-            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_30.start|add:"&end="|add:quick_ranges.last_30.end variant="secondary" %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_30.start|add:"&end="|add:quick_ranges.last_30.end|add:owner_query variant="secondary" %}
                 {% trans "Last 30 days" %}
             {% endcomponent %}
-            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_90.start|add:"&end="|add:quick_ranges.last_90.end variant="secondary" %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_90.start|add:"&end="|add:quick_ranges.last_90.end|add:owner_query variant="secondary" %}
                 {% trans "Last 90 days" %}
             {% endcomponent %}
-            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_month.start|add:"&end="|add:quick_ranges.last_month.end variant="secondary" %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.last_month.start|add:"&end="|add:quick_ranges.last_month.end|add:owner_query variant="secondary" %}
                 {% trans "Last month" %}
             {% endcomponent %}
-            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.ytd.start|add:"&end="|add:quick_ranges.ytd.end variant="secondary" %}
+            {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.ytd.start|add:"&end="|add:quick_ranges.ytd.end|add:owner_query variant="secondary" %}
                 {% trans "YTD" %}
             {% endcomponent %}
         </div>
     </div>
 
     {% component "unfold/components/card.html" with title=_("Filter Dates") %}
-        <form method="get" class="grid gap-3 sm:grid-cols-3 sm:items-end">
+        <form method="get" class="grid gap-3 sm:items-end {% if request.user.is_superuser %}sm:grid-cols-4{% else %}sm:grid-cols-3{% endif %}">
             <div class="flex flex-col gap-1">
                 <label class="text-xs uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark" for="filter-start">
                     {% trans "Start date" %}
@@ -63,11 +106,40 @@
                     class="vDateField border border-base-200 bg-white font-medium min-w-20 placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-52"
                 />
             </div>
+            {% if request.user.is_superuser %}
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark" for="filter-owner-search">
+                        {% trans "Search user" %}
+                    </label>
+                    <input
+                        id="filter-owner-search"
+                        type="search"
+                        placeholder="{% trans 'Type name or username' %}"
+                        class="border border-base-200 bg-white font-medium min-w-20 placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-52"
+                    />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs uppercase tracking-wide text-font-subtle-light dark:text-font-subtle-dark" for="filter-owner">
+                        {% trans "Owner" %}
+                    </label>
+                    <select
+                        id="filter-owner"
+                        name="owner"
+                        class="border border-base-200 bg-white font-medium min-w-20 placeholder-base-400 rounded-default shadow-xs text-font-default-light text-sm focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark dark:scheme-dark px-3 py-2 w-full min-w-52"
+                    >
+                        {% for user in owner_choices %}
+                            <option value="{{ user.id }}" {% if user.id|stringformat:"s" == owner_filter.id %}selected{% endif %}>
+                                {{ user.label }}{% if user.username %} ({{ user.username }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
             <div class="flex flex-wrap gap-2">
                 {% component "unfold/components/button.html" with submit=1 variant="primary" size="md" %}
                     {% trans "Apply" %}
                 {% endcomponent %}
-                {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.this_month.start|add:"&end="|add:quick_ranges.this_month.end variant="ghost" %}
+                {% component "unfold/components/button.html" with href=request.path|add:"?start="|add:quick_ranges.this_month.start|add:"&end="|add:quick_ranges.this_month.end|add:owner_query variant="ghost" %}
                     {% trans "Reset" %}
                 {% endcomponent %}
             </div>

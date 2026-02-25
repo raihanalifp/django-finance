@@ -3,6 +3,7 @@ from decimal import Decimal
 import json
 
 from django.db.models import Sum
+from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
 from django.utils.dateparse import parse_date
 from django.utils import timezone
@@ -38,6 +39,7 @@ def _daterange(start_date, end_date):
 
 
 def dashboard_callback(request, context):
+    User = get_user_model()
     today = timezone.localdate()
     default_start, default_end = _month_range(today)
     last_month_end = default_start - timedelta(days=1)
@@ -61,9 +63,25 @@ def dashboard_callback(request, context):
     labels = [value.strftime("%d %b") for value in day_keys]
     range_days = len(day_keys)
 
+    owner_user = None
+    owner_query = ""
+    owner_choices = []
     if request.user.is_superuser:
-        transaction_queryset = Transaction.objects.all()
-        category_queryset = Category.objects.all()
+        owner_param = request.GET.get("owner")
+        if owner_param:
+            try:
+                owner_user = User.objects.filter(id=int(owner_param)).first()
+            except (TypeError, ValueError):
+                owner_user = None
+        if owner_user is None:
+            owner_user = request.user
+        owner_query = f"&owner={owner_user.id}"
+        user_queryset = User.objects.order_by("username")
+        for user in user_queryset:
+            label = user.get_full_name().strip() or user.username or f"User #{user.pk}"
+            owner_choices.append({"id": user.pk, "label": label, "username": user.username})
+        transaction_queryset = Transaction.objects.filter(owner=owner_user)
+        category_queryset = Category.objects.filter(owner=owner_user)
     else:
         transaction_queryset = Transaction.objects.filter(owner=request.user)
         category_queryset = Category.objects.filter(owner=request.user)
@@ -245,6 +263,14 @@ def dashboard_callback(request, context):
                     "end": today.isoformat(),
                 },
             },
+            "owner_query": owner_query,
+            "owner_filter": {
+                "id": str(owner_user.pk) if owner_user else "",
+                "label": owner_user.get_full_name().strip() or owner_user.username
+                if owner_user
+                else "",
+            },
+            "owner_choices": owner_choices,
             "expense_ratio": float(expense_ratio),
             "top_categories": top_categories,
             "links": {

@@ -1,8 +1,10 @@
-from django.contrib import admin
-from django.core.exceptions import PermissionDenied
+from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
-from django.contrib.auth.models import Group
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.password_validation import validate_password
 from unfold.admin import ModelAdmin
 from .models import Category, Transaction
 
@@ -63,10 +65,9 @@ class TransactionAdmin(ModelAdmin):
         return tuple(base)
 
     def get_list_filter(self, request):
-        base = list(super().get_list_filter(request))
-        if request.user.is_superuser and "owner" not in base:
-            base.append("owner")
-        return tuple(base)
+        if request.user.is_superuser:
+            return (OwnerScopeFilter, "owner", "category", "date")
+        return ("category", "date")
 
     def get_exclude(self, request, obj=None):
         exclude = list(super().get_exclude(request, obj) or [])
@@ -89,13 +90,48 @@ class TransactionAdmin(ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class OwnerScopeFilter(admin.SimpleListFilter):
+    title = "scope"
+    parameter_name = "scope"
+
+    def lookups(self, request, model_admin):
+        if request.user.is_superuser:
+            return (("mine", "My transactions"), ("all", "All transactions"))
+        return ()
+
+    def queryset(self, request, queryset):
+        if not request.user.is_superuser:
+            return queryset
+        if request.GET.get("owner__id__exact"):
+            return queryset
+        value = self.value()
+        if value == "all":
+            return queryset
+        return queryset.filter(owner=request.user)
+
+
 User = get_user_model()
+
+
+class LooseUserCreationForm(UserCreationForm):
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise ValidationError(self.error_messages["password_mismatch"], code="password_mismatch")
+        return password2
+
+    def validate_password_for_user(self, user, **kwargs):
+        return
 
 
 class UserAdmin(DjangoUserAdmin):
     show_add_link = True
+    add_form = LooseUserCreationForm
 
     def get_fieldsets(self, request, obj=None):
+        if obj is None:
+            return self.get_add_fieldsets(request, obj)
         if request.user.is_superuser:
             return super().get_fieldsets(request, obj)
         return (
@@ -106,7 +142,27 @@ class UserAdmin(DjangoUserAdmin):
 
     def get_add_fieldsets(self, request, obj=None):
         if request.user.is_superuser:
-            return super().get_add_fieldsets(request, obj)
+            return (
+                (
+                    None,
+                    {
+                        "classes": ("wide",),
+                        "fields": (
+                            "username",
+                            "password1",
+                            "password2",
+                            "first_name",
+                            "last_name",
+                            "email",
+                            "is_active",
+                            "is_staff",
+                            "is_superuser",
+                            "groups",
+                            "user_permissions",
+                        ),
+                    },
+                ),
+            )
         return (
             (
                 None,
@@ -137,12 +193,51 @@ class UserAdmin(DjangoUserAdmin):
         return super().has_delete_permission(request, obj)
 
     def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
+        is_superuser_request = request.user.is_superuser
+        creating = obj.pk is None
+        if not is_superuser_request:
             obj.is_superuser = False
+            if creating and not obj.is_staff:
+                obj.is_staff = True
         super().save_model(request, obj, form, change)
-        if not request.user.is_superuser:
-            obj.user_permissions.clear()
-            obj.groups.clear()
+        if creating and not obj.is_superuser and obj.is_staff:
+            messages.info(
+                request,
+                "User dibuat sebagai staff agar bisa login ke admin.",
+            )
+        if creating:
+            raw_password = form.cleaned_data.get("password1")
+            if raw_password:
+                try:
+                    validate_password(raw_password, obj)
+                except ValidationError as exc:
+                    messages.warning(
+                        request,
+                        "Password lemah: "
+                        + " ".join(exc.messages)
+                        + " User tetap dibuat, tetapi disarankan mengganti password.",
+                    )
+        if not obj.is_superuser:
+            default_codenames = [
+                "add_category",
+                "change_category",
+                "delete_category",
+                "view_category",
+                "add_transaction",
+                "change_transaction",
+                "delete_transaction",
+                "view_transaction",
+            ]
+            default_perms = Permission.objects.filter(
+                content_type__app_label="transactions",
+                codename__in=default_codenames,
+            )
+            if is_superuser_request:
+                if creating:
+                    obj.user_permissions.add(*default_perms)
+            else:
+                obj.user_permissions.set(default_perms)
+                obj.groups.clear()
 
 
 class GroupAdmin(admin.ModelAdmin):
