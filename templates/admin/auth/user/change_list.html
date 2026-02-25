@@ -1,0 +1,16 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block nav-global-side %}
+    {% if has_add_permission %}
+        {% url opts|admin_urlname:"add" as add_url %}
+        {% blocktranslate with name=opts.verbose_name asvar add_title %}Add {{ name }}{% endblocktranslate %}
+        {% if add_url %}
+            <div class="flex flex-row items-center">
+                <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink bg-primary-600 flex items-center h-[38px] justify-center -my-1 rounded-full w-[38px]" title="{{ add_title }}">
+                    <span class="material-symbols-outlined text-white">add</span>
+                </a>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
