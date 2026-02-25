@@ -17,7 +17,9 @@ pip install -r requirements.txt
 ```
 
 ## 3) Environment Variables
-Copy `.env.example` to your server secrets store, or export in the shell:
+Create a `.env` file in the project root (same level as `manage.py`) based on `.env.example`,
+or export the variables in the shell. `python-decouple` will read `.env` automatically.
+
 ```bash
 export DJANGO_DEBUG=0
 export DJANGO_SECRET_KEY="change-me"

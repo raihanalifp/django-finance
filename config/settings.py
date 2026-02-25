@@ -10,37 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-import os
 from pathlib import Path
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-def _get_env_bool(name, default=False):
-    value = os.getenv(name, str(int(default)))
-    return value.lower() in {"1", "true", "yes", "on"}
-
-
-def _get_env_list(name):
-    return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
+SECRET_KEY = config(
     "DJANGO_SECRET_KEY",
-    "django-insecure-e0!mg(=ss8j%qqy1&n=o@4*q-#7m(r&!fbm*fr*=j6rrun%uh#",
+    default="django-insecure-e0!mg(=ss8j%qqy1&n=o@4*q-#7m(r&!fbm*fr*=j6rrun%uh#",
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _get_env_bool("DJANGO_DEBUG", True)
+DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = _get_env_list("DJANGO_ALLOWED_HOSTS")
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="", cast=Csv())
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["*"]
 
@@ -92,7 +83,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-db_engine = os.getenv("DJANGO_DB_ENGINE", "django.db.backends.postgresql")
+db_engine = config("DJANGO_DB_ENGINE", default="django.db.backends.postgresql")
 db_name_default = "django_finance"
 if db_engine == "django.db.backends.sqlite3":
     db_name_default = str(BASE_DIR / "db.sqlite3")
@@ -100,11 +91,11 @@ if db_engine == "django.db.backends.sqlite3":
 DATABASES = {
     "default": {
         "ENGINE": db_engine,
-        "NAME": os.getenv("DJANGO_DB_NAME", db_name_default),
-        "USER": os.getenv("DJANGO_DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DJANGO_DB_PASSWORD", ""),
-        "HOST": os.getenv("DJANGO_DB_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DJANGO_DB_PORT", "5432"),
+        "NAME": config("DJANGO_DB_NAME", default=db_name_default),
+        "USER": config("DJANGO_DB_USER", default="postgres"),
+        "PASSWORD": config("DJANGO_DB_PASSWORD", default=""),
+        "HOST": config("DJANGO_DB_HOST", default="127.0.0.1"),
+        "PORT": config("DJANGO_DB_PORT", default="5432"),
     }
 }
 
@@ -152,7 +143,7 @@ STATICFILES_DIRS = [
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-CSRF_TRUSTED_ORIGINS = _get_env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = config("DJANGO_CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
