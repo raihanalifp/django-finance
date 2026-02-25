@@ -93,8 +93,6 @@ User = get_user_model()
 
 
 class UserAdmin(DjangoUserAdmin):
-    show_add_link = True
-
     def get_fieldsets(self, request, obj=None):
         if request.user.is_superuser:
             return super().get_fieldsets(request, obj)
