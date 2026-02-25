@@ -61,7 +61,14 @@ def dashboard_callback(request, context):
     labels = [value.strftime("%d %b") for value in day_keys]
     range_days = len(day_keys)
 
-    range_queryset = Transaction.objects.filter(date__range=(start_date, end_date))
+    if request.user.is_superuser:
+        transaction_queryset = Transaction.objects.all()
+        category_queryset = Category.objects.all()
+    else:
+        transaction_queryset = Transaction.objects.filter(owner=request.user)
+        category_queryset = Category.objects.filter(owner=request.user)
+
+    range_queryset = transaction_queryset.filter(date__range=(start_date, end_date))
     income_total = (
         range_queryset.filter(category__type="income").aggregate(total=Sum("amount"))["total"]
         or Decimal("0")
@@ -100,7 +107,7 @@ def dashboard_callback(request, context):
         for transaction in recent_transactions
     ]
 
-    active_categories = Category.objects.filter(
+    active_categories = category_queryset.filter(
         transaction__date__range=(start_date, end_date)
     ).distinct()
 

@@ -200,11 +200,13 @@ UNFOLD = {
                         "title": _("Users"),
                         "icon": "people",
                         "link": reverse_lazy("admin:auth_user_changelist"),
+                        "permission": "transactions.permissions.can_view_users",
                     },
                     {
                         "title": _("Groups"),
                         "icon": "group",
                         "link": reverse_lazy("admin:auth_group_changelist"),
+                        "permission": "transactions.permissions.can_view_groups",
                     },
                 ],
             },
