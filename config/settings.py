@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.templatetags.static import static
 from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -160,6 +161,9 @@ UNFOLD = {
     "SITE_SUBHEADER": "Operations Dashboard",
     "SITE_URL": "/",
     "DASHBOARD_CALLBACK": "transactions.dashboard.dashboard_callback",
+    "STYLES": [
+        lambda request: static("admin-mobile-fixes.css"),
+    ],
     "SIDEBAR": {
         "show_search": True,
         "show_all_applications": False,

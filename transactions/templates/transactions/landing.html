@@ -29,7 +29,10 @@
       --fm: 'Geist Mono', monospace;
     }
 
-    html { scroll-behavior:smooth; }
+    html {
+      scroll-behavior:smooth;
+      overflow-x:hidden;
+    }
 
     body {
       background:var(--bg);
@@ -99,6 +102,32 @@
     .bcta::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.3) 50%,transparent 60%); transform:translateX(-100%); transition:transform .5s; }
     .bcta:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(74,222,128,.4); }
     .bcta:hover::after { transform:translateX(100%); }
+    @media(max-width:640px){
+      nav { padding:.8rem .8rem; }
+      .npill {
+        border-radius:20px;
+        flex-wrap:wrap;
+        gap:.6rem;
+        padding:.7rem .8rem;
+      }
+      .logo { font-size:.82rem; min-width:0; }
+      .logo-ic { width:22px; height:22px; }
+      .nlinks {
+        width:100%;
+        min-width:0;
+        justify-content:flex-end;
+        flex-wrap:wrap;
+      }
+      .nlinks a.nl {
+        font-size:.58rem;
+        letter-spacing:.1em;
+        padding:.34rem .62rem;
+      }
+      .bcta {
+        font-size:.62rem;
+        padding:.44rem .9rem;
+      }
+    }
 
     /* ── HERO ── */
     .hero { position:relative; z-index:1; max-width:1140px; margin:0 auto; padding:7rem 2rem 5rem; display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center; }

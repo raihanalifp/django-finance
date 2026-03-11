@@ -1,0 +1,16 @@
+@media (max-width: 1279px) {
+  #nav-sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #nav-sidebar-inner {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+
+  #nav-sidebar-apps {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+}
