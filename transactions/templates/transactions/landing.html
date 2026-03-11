@@ -142,7 +142,37 @@
     }
     .mnav-links { display:flex; flex-direction:column; gap:.5rem; }
     .mnav-links .nl,
-    .mnav-links .bcta { width:100%; justify-content:center; }
+    .mnav-links .bcta {
+      width:100%;
+      justify-content:center;
+      text-decoration:none;
+    }
+    .mnav-links .nl {
+      display:flex;
+      align-items:center;
+      min-height:44px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.02);
+      color:#cbd5e1;
+      font-family:var(--fm);
+      font-size:.64rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      padding:.65rem .9rem;
+      transition:all .2s ease;
+    }
+    .mnav-links .nl:hover {
+      color:#fff;
+      border-color:var(--borderHi);
+      background:var(--greenDim);
+      transform:translateY(-1px);
+    }
+    .mnav-links .nl:focus-visible,
+    .mnav-links .bcta:focus-visible {
+      outline:2px solid var(--green);
+      outline-offset:2px;
+    }
 
     body.mnav-open { overflow:hidden; }
     body.mnav-open .mnav-backdrop { opacity:1; pointer-events:auto; }
